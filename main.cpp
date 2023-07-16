@@ -36,7 +36,7 @@ public:
 	void unlock() { flag_.clear(); }
 };
 
-static inline void pause() {
+static inline void cpu_pause() {
 #if _MSC_VER
 	_mm_pause();
 #else
@@ -52,7 +52,7 @@ public:
 		for (;;) {
 			if (!flag_.test_and_set(std::memory_order_acquire))
 				return;
-			while (flag_.test(std::memory_order_relaxed)) pause();
+			while (flag_.test(std::memory_order_relaxed)) cpu_pause();
 		}
 	}
 	void unlock() { flag_.clear(std::memory_order_release); }
@@ -68,7 +68,7 @@ public:
 				return;
 			for (int spin_count = 0; flag_.test(std::memory_order_relaxed); ++spin_count) {
 				if (spin_count < 16)
-					pause();
+					cpu_pause();
 				else {
 					spin_count = 0;
 					std::this_thread::yield();
